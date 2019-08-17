@@ -1,4 +1,4 @@
-package util.impl;
+package util;
 
 public class TestCase_VectorImpl
 {
