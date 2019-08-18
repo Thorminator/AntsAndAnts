@@ -5,6 +5,7 @@ import main.java.external.control.ControllerHelper;
 import main.java.control.GameController;
 import main.java.external.entity.Entity;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -17,7 +18,9 @@ public class ControllerHelperImpl implements ControllerHelper {
 
     @Override
     @NotNull
-    public List<Map.Entry<Entity, Float>> getEntitiesSortedByDistanceToGivenEntity(Entity entity) throws IllegalModificationException {
+    public List<Map.Entry<Entity, Float>> getEntitiesSortedByDistanceToGivenEntity(@NotNull Entity entity) throws IllegalModificationException {
+        Objects.requireNonNull(entity);
+
         List<Map.Entry<Entity, Float>> resultingList = getEntitiesByDistanceToGivenEntity(entity);
 
         resultingList.sort((Map.Entry<Entity, Float> ent1, Map.Entry<Entity, Float> ent2)
@@ -26,8 +29,37 @@ public class ControllerHelperImpl implements ControllerHelper {
         return resultingList;
     }
 
+    @Override
+    @Nullable
+    public Map.Entry<Entity, Float> getClosestEntityOfType(@NotNull Entity entity, @NotNull Class<? extends Entity> entityType) throws IllegalModificationException {
+        Objects.requireNonNull(entity);
+        Objects.requireNonNull(entityType);
+
+        List<Map.Entry<Entity, Float>> entitiesByDistanceToGivenEntity = getEntitiesByDistanceToGivenEntity(entity);
+        Map.Entry<Entity, Float> closestEntity = null;
+
+        for (Map.Entry<Entity, Float> entityWithDistance : entitiesByDistanceToGivenEntity) {
+            boolean correctEntityType = entityType.isAssignableFrom(entityWithDistance.getKey().getClass());
+            if (!correctEntityType) {
+                continue;
+            }
+
+            if (closestEntity == null) {
+                closestEntity = entityWithDistance;
+                continue;
+            }
+
+            boolean currentEntityIsCloser = entityWithDistance.getValue() < closestEntity.getValue();
+            if (currentEntityIsCloser) {
+                closestEntity = entityWithDistance;
+            }
+        }
+
+        return closestEntity;
+    }
+
     @NotNull
-    private List<Map.Entry<Entity, Float>> getEntitiesByDistanceToGivenEntity(Entity entity) throws IllegalModificationException {
+    private List<Map.Entry<Entity, Float>> getEntitiesByDistanceToGivenEntity(@NotNull Entity entity) throws IllegalModificationException {
         List<Map.Entry<Entity, Float>> unsortedResultingList = new ArrayList<>();
         boolean entityFound = false;
 
